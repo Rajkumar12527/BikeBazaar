@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, Bike, RefreshCw, Calculator, Phone, MessageSquare } from 'lucide-react';
+import { Home, Bike, RefreshCw, Calculator, MessageSquare } from 'lucide-react';
 
 export default function MobileBottomNav({ activeTab, setActiveTab }) {
   return (
@@ -37,7 +37,7 @@ export default function MobileBottomNav({ activeTab, setActiveTab }) {
       </div>
 
       <a 
-        href="https://wa.me/919876543210"
+        href="https://wa.me/917480078779?text=Hi%20Bike%20Bazaar!%20I%20want%20to%20inquire."
         target="_blank"
         rel="noreferrer"
         className="mobile-nav-item"

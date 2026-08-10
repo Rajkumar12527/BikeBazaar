@@ -27,7 +27,7 @@ export default function BikeDetailModal({ bike, onClose, onBookTestDrive, onCalc
     const text = encodeURIComponent(
       `Hello BIKE BAZAAR! I want to inquire about "${bike.name}".\n\n- Price: ${formatPrice(bike.price)}\n- Year: ${bike.year}\n- KM Driven: ${bike.km.toLocaleString()} km\n- Owner: ${bike.owner}\n- RTO: ${bike.rto}\n\nPlease share availability for test drive and RC transfer details.`
     );
-    window.open(`https://wa.me/919876543210?text=${text}`, '_blank');
+    window.open(`https://wa.me/917480078779?text=${text}`, '_blank');
   };
 
   return (
@@ -62,7 +62,7 @@ export default function BikeDetailModal({ bike, onClose, onBookTestDrive, onCalc
         <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           {/* Top Section: Photo Gallery (5-6 Photos) & Price Overview */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', lgGridTemplateColumns: '1.2fr 1fr', gap: '1.5rem' }}>
+          <div className="grid-responsive-2" style={{ gap: '1.5rem' }}>
             
             {/* Gallery Column */}
             <div>
@@ -232,11 +232,11 @@ export default function BikeDetailModal({ bike, onClose, onBookTestDrive, onCalc
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
                   <button className="btn-whatsapp" onClick={handleWhatsApp} style={{ padding: '0.75rem' }}>
                     <MessageSquare size={18} />
-                    <span>WhatsApp Us</span>
+                    <span>WhatsApp</span>
                   </button>
-                  <a href={`tel:${bike.sellerPhone}`} className="btn-primary" style={{ padding: '0.75rem', justifyContent: 'center' }}>
+                  <a href="tel:+917480078779" className="btn-primary" style={{ padding: '0.75rem', justifyContent: 'center' }}>
                     <Phone size={18} />
-                    <span>Call Sales</span>
+                    <span>Call 7480078779</span>
                   </a>
                 </div>
               </div>
@@ -303,7 +303,7 @@ export default function BikeDetailModal({ bike, onClose, onBookTestDrive, onCalc
           </div>
 
           {/* Description & Key Features */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', lgGridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div className="grid-responsive-2" style={{ gap: '1.5rem' }}>
             <div>
               <h4 style={{ fontWeight: 700, fontSize: '1.05rem', marginBottom: '0.5rem', color: '#0f172a' }}>Vehicle History & Summary</h4>
               <p style={{ color: '#475569', fontSize: '0.92rem', lineHeight: '1.6' }}>
