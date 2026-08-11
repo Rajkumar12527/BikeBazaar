@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Bike, Phone, MessageSquare, Menu, X, Heart, ShieldCheck, Mail } from 'lucide-react';
+import { Bike, Phone, MessageSquare, Menu, X, Heart, ShieldCheck, Mail, User, LogOut, ChevronDown, CheckCircle2 } from 'lucide-react';
 
-export default function Header({ activeTab, setActiveTab, wishlistCount }) {
+export default function Header({ activeTab, setActiveTab, wishlistCount, currentUser, onOpenLogin, onLogout }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const navLinks = [
     { id: 'home', label: 'Home' },
@@ -16,21 +17,22 @@ export default function Header({ activeTab, setActiveTab, wishlistCount }) {
   const handleNavClick = (id) => {
     setActiveTab(id);
     setMobileMenuOpen(false);
+    setUserDropdownOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleWhatsApp = () => {
-    window.open('https://wa.me/917480078779?text=Hi%20Bike%20Bazaar,%20I%20want%20to%20inquire%20about%20used%20bikes.', '_blank');
+    window.open('https://wa.me/917480078779?text=Hi%20Bike%20Bazaar,%20I%20want%20to%20inquire%20about%20certified%20used%20bikes.', '_blank');
   };
 
   return (
     <header className="header">
-      {/* Top Announcement Bar (Hidden on Mobile to save screen space) */}
+      {/* Top Announcement Bar */}
       <div className="top-bar">
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
             <ShieldCheck size={14} style={{ color: '#10b981' }} />
-            <span>Patna's Certified Used Two-Wheeler Showroom • 100+ Point Inspection</span>
+            <span>Patna's Certified Used Two-Wheeler Showroom • 100+ Point Inspection Guarantee</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <a href="tel:+917480078779" style={{ color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -48,14 +50,23 @@ export default function Header({ activeTab, setActiveTab, wishlistCount }) {
       {/* Main Navbar */}
       <div className="container">
         <div className="navbar">
-          {/* Logo */}
-          <div className="brand-logo" onClick={() => handleNavClick('home')} style={{ cursor: 'pointer' }}>
-            <div className="brand-icon-box">
-              <Bike size={20} />
+          {/* Ultra Premium Logo Badge */}
+          <div className="brand-logo" onClick={() => handleNavClick('home')} title="Bike Bazaar Home">
+            <div className="brand-logo-badge">
+              <Bike size={22} color="#ffffff" />
+              <div className="brand-logo-spark">
+                <ShieldCheck size={11} color="#f59e0b" />
+              </div>
             </div>
-            <div className="brand-text">
-              <span className="brand-main">BIKE BAZAAR</span>
-              <span className="brand-sub">CERTIFIED STORE</span>
+            <div className="brand-text-container">
+              <div className="brand-title">
+                BIKE <span className="brand-highlight">BAZAAR</span>
+              </div>
+              <div className="brand-tagline">
+                <span className="brand-tag-certified">CERTIFIED STORE</span>
+                <span className="brand-tag-dot">•</span>
+                <span className="brand-tag-city">PATNA</span>
+              </div>
             </div>
           </div>
 
@@ -74,75 +85,145 @@ export default function Header({ activeTab, setActiveTab, wishlistCount }) {
 
           {/* Nav Right Actions */}
           <div className="nav-actions">
-            {wishlistCount > 0 && (
-              <button 
+            {/* Wishlist Button */}
+            <button 
+              className={`btn-secondary btn-sm ${activeTab === 'wishlist' ? 'active' : ''}`}
+              onClick={() => handleNavClick('wishlist')}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                color: activeTab === 'wishlist' || wishlistCount > 0 ? '#dc2626' : '#475569',
+                borderColor: activeTab === 'wishlist' ? '#fca5a5' : '#e2e8f0',
+                backgroundColor: activeTab === 'wishlist' ? '#fff1f2' : '#ffffff',
+                fontWeight: 700
+              }}
+              title="View saved wishlist vehicles"
+            >
+              <Heart size={15} fill={activeTab === 'wishlist' || wishlistCount > 0 ? "#dc2626" : "none"} />
+              <span>{wishlistCount}</span>
+            </button>
+
+            {/* User Auth Profile / Login Button */}
+            {currentUser ? (
+              <div style={{ position: 'relative' }}>
+                <button
+                  className="btn-secondary btn-sm"
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.4rem',
+                    backgroundColor: '#eff6ff',
+                    borderColor: '#bfdbfe',
+                    color: '#1e40af',
+                    fontWeight: 700
+                  }}
+                >
+                  <div style={{
+                    width: '22px',
+                    height: '22px',
+                    borderRadius: '50%',
+                    backgroundColor: '#1e40af',
+                    color: '#ffffff',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '0.75rem',
+                    fontWeight: 800
+                  }}>
+                    {currentUser.name ? currentUser.name[0].toUpperCase() : 'U'}
+                  </div>
+                  <span style={{ maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {currentUser.name ? currentUser.name.split(' ')[0] : 'Account'}
+                  </span>
+                  <ChevronDown size={14} />
+                </button>
+
+                {userDropdownOpen && (
+                  <div className="user-menu-dropdown">
+                    <div style={{ padding: '0.6rem 0.85rem', borderBottom: '1px solid #e2e8f0', marginBottom: '0.35rem' }}>
+                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0f172a' }}>{currentUser.name}</div>
+                      <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{currentUser.phone || currentUser.email}</div>
+                    </div>
+                    <div 
+                      className="user-menu-item" 
+                      onClick={() => handleNavClick('wishlist')}
+                    >
+                      <Heart size={15} style={{ color: '#dc2626' }} />
+                      <span>My Saved Wishlist ({wishlistCount})</span>
+                    </div>
+                    <div className="user-menu-item" onClick={() => handleNavClick('sell')}>
+                      <Bike size={15} style={{ color: '#1e40af' }} />
+                      <span>My Sell Requests</span>
+                    </div>
+                    <div 
+                      className="user-menu-item" 
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        onLogout();
+                      }}
+                      style={{ color: '#dc2626', borderTop: '1px solid #f1f5f9', marginTop: '0.35rem', paddingTop: '0.6rem' }}
+                    >
+                      <LogOut size={15} />
+                      <span>Logout Account</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
                 className="btn-secondary btn-sm"
-                onClick={() => handleNavClick('shop')}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#dc2626' }}
-                title="Saved vehicles"
+                onClick={onOpenLogin}
+                style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#1e40af', fontWeight: 700, borderColor: '#bfdbfe', backgroundColor: '#f0f9ff' }}
               >
-                <Heart size={15} fill="#dc2626" />
-                <span>{wishlistCount}</span>
+                <User size={15} />
+                <span>Login</span>
               </button>
             )}
 
-            {/* Desktop WhatsApp & Call Buttons */}
+            {/* Desktop WhatsApp Icon Button */}
             <button 
-              className="btn-whatsapp btn-sm desktop-only-btn"
+              className="btn-whatsapp btn-icon-only desktop-only-btn"
               onClick={handleWhatsApp}
+              title="Chat on WhatsApp (+91 7480078779)"
+              aria-label="Chat on WhatsApp"
             >
-              <MessageSquare size={15} />
-              <span>WhatsApp</span>
+              <MessageSquare size={18} />
             </button>
 
+            {/* Desktop Phone Call Icon Button */}
             <a 
               href="tel:+917480078779" 
-              className="btn-primary btn-sm desktop-only-btn"
+              className="btn-primary btn-icon-only desktop-only-btn"
+              title="Call Showroom (+91 7480078779)"
+              aria-label="Call Showroom"
             >
-              <Phone size={15} />
-              <span>Call 7480078779</span>
+              <Phone size={18} />
             </a>
 
-            {/* Compact Mobile WhatsApp Icon Button */}
+            {/* Mobile Hamburger Drawer Toggle (Hides automatically on desktop via CSS) */}
             <button 
-              className="btn-whatsapp btn-sm mobile-only-btn"
-              onClick={handleWhatsApp}
-              style={{ padding: '0.35rem 0.55rem' }}
-              title="WhatsApp"
-            >
-              <MessageSquare size={16} />
-            </button>
-
-            {/* Mobile Hamburger Drawer Toggle */}
-            <button 
-              className="btn-secondary btn-sm" 
+              className="btn-secondary btn-sm mobile-hamburger-btn" 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              style={{ display: 'flex', border: 'none', padding: '0.35rem', backgroundColor: 'transparent' }}
-              aria-label="Toggle Navigation"
+              style={{ border: 'none', padding: '0.35rem', backgroundColor: 'transparent' }}
+              aria-label="Toggle Navigation Menu"
             >
-              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile Drawer Menu (Strictly hidden on desktop via CSS class .mobile-drawer-menu) */}
       {mobileMenuOpen && (
-        <div style={{
-          backgroundColor: '#ffffff',
-          borderBottom: '1px solid #e2e8f0',
-          padding: '0.75rem 1rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.35rem',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-        }}>
+        <div className="mobile-drawer-menu">
           {navLinks.map((link) => (
             <div
               key={link.id}
               onClick={() => handleNavClick(link.id)}
               style={{
-                padding: '0.6rem 0.85rem',
+                padding: '0.65rem 0.85rem',
                 fontWeight: 600,
                 fontSize: '0.92rem',
                 borderRadius: '8px',
@@ -155,7 +236,34 @@ export default function Header({ activeTab, setActiveTab, wishlistCount }) {
             </div>
           ))}
 
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.65rem', marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {/* User Auth row for Mobile */}
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.65rem', marginTop: '0.3rem' }}>
+            {currentUser ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.85rem' }}>
+                <div>
+                  <div style={{ fontWeight: 800, fontSize: '0.88rem' }}>{currentUser.name}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{currentUser.phone}</div>
+                </div>
+                <button 
+                  onClick={() => { setMobileMenuOpen(false); onLogout(); }} 
+                  style={{ color: '#dc2626', fontSize: '0.8rem', fontWeight: 700, backgroundColor: 'transparent', border: 'none' }}
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <button 
+                onClick={() => { setMobileMenuOpen(false); onOpenLogin(); }}
+                className="btn-secondary"
+                style={{ width: '100%', justifyContent: 'center', marginBottom: '0.5rem', color: '#1e40af', fontWeight: 700 }}
+              >
+                <User size={16} />
+                <span>Login / Register Account</span>
+              </button>
+            )}
+          </div>
+
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.65rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <button 
               onClick={handleWhatsApp}
               className="btn-whatsapp"
