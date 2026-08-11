@@ -1,5 +1,45 @@
 export const bikesData = [
   {
+    id: "bike-raj-ktm",
+    name: "Raj KTM",
+    brand: "KTM",
+    category: "Bike",
+    type: "Sports",
+    price: 400000,
+    originalPrice: 480000,
+    emi: 10000,
+    year: 2024,
+    km: 8000,
+    owner: "3rd Owner",
+    fuelType: "Petrol",
+    mileage: "30 kmpl",
+    engine: "373 cc",
+    cc: 390,
+    rto: "BR-01 (Patna)",
+    insurance: "Comprehensive Valid till 2027",
+    conditionScore: 9.8,
+    inspectionStatus: "100% Verified",
+    location: "Main Showroom, Patna",
+    badge: "Superbike",
+    sellerPhone: "+91 7480078779",
+    sellerEmail: "doubledoormusic12@gmail.com",
+    features: [
+      "Slipper Clutch & Quickshifter",
+      "TFT Color Display with Bluetooth Nav",
+      "WP APEX Adjustable Suspension",
+      "Bosch Dual-Channel Supermoto ABS",
+      "Ride-by-Wire Throttle System",
+      "100% Certified Maintenance Track"
+    ],
+    images: [
+      "https://images.unsplash.com/photo-1568772585407-9361f9bf3a87?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1558980862-50d4334336c1?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80"
+    ],
+    description: "Superb condition KTM Sports flagship model 2024. Only 8,000 km driven with extreme care. 100% original paint, high performance tuned engine and zero issues."
+  },
+  {
     id: "bike-01",
     name: "Royal Enfield Classic 350 (Stealth Black)",
     brand: "Royal Enfield",

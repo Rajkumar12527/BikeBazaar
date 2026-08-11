@@ -37,35 +37,40 @@ export default function App() {
   // Filters passed from Hero Search on HomePage to ShopPage
   const [heroFilters, setHeroFilters] = useState({});
 
-  // 1. DYNAMIC VEHICLE INVENTORY STATE (Sanitized & Persistent)
+  // 1. DYNAMIC VEHICLE INVENTORY STATE (Sanitized, Persistent & Cross-Device Merged)
   const [bikes, setBikes] = useState(() => {
     try {
       const saved = localStorage.getItem('bike_bazaar_inventory_db');
-      if (!saved) return defaultStaticBikes;
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed.map((item) => ({
-          id: item.id || `bike-${Math.random()}`,
-          name: item.name || 'Certified Vehicle',
-          brand: item.brand || 'Honda',
-          category: item.category || 'Cruiser',
-          type: item.type || 'Bike',
-          price: typeof item.price === 'number' ? item.price : Number(item.price) || 75000,
-          originalPrice: typeof item.originalPrice === 'number' ? item.originalPrice : Number(item.originalPrice) || 85000,
-          year: typeof item.year === 'number' ? item.year : Number(item.year) || 2022,
-          km: typeof item.km === 'number' ? item.km : Number(item.km) || 10000,
-          owner: item.owner || '1st Owner',
-          cc: item.cc || '350',
-          score: item.score || '96',
-          location: item.location || 'Patna, Bihar',
-          isFeatured: item.isFeatured !== false,
-          status: item.status || 'Available',
-          images: Array.isArray(item.images) && item.images.length > 0 ? item.images : ['https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80'],
-          badges: Array.isArray(item.badges) ? item.badges : ['Certified', '6 M Warranty'],
-          specs: item.specs || { mileage: '40 kmpl', fuelType: 'Petrol', brakes: 'ABS', transmission: 'Manual', rto: 'BR-01 Patna', insurance: 'Valid 2027' }
-        }));
+      let combinedList = defaultStaticBikes;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const existingIds = new Set(parsed.map((b) => b.id));
+          const missingDefaults = defaultStaticBikes.filter((d) => !existingIds.has(d.id));
+          // Prepend new catalog additions (like Raj KTM) to the FRONT so they show at the top on every phone/device!
+          combinedList = [...missingDefaults, ...parsed];
+        }
       }
-      return defaultStaticBikes;
+      return combinedList.map((item) => ({
+        id: item.id || `bike-${Math.random()}`,
+        name: item.name || 'Certified Vehicle',
+        brand: item.brand || 'Honda',
+        category: item.category || 'Cruiser',
+        type: item.type || 'Bike',
+        price: typeof item.price === 'number' ? item.price : Number(item.price) || 75000,
+        originalPrice: typeof item.originalPrice === 'number' ? item.originalPrice : Number(item.originalPrice) || 85000,
+        year: typeof item.year === 'number' ? item.year : Number(item.year) || 2022,
+        km: typeof item.km === 'number' ? item.km : Number(item.km) || 10000,
+        owner: item.owner || '1st Owner',
+        cc: item.cc || '350',
+        score: item.score || '96',
+        location: item.location || 'Patna, Bihar',
+        isFeatured: item.isFeatured !== false,
+        status: item.status || 'Available',
+        images: Array.isArray(item.images) && item.images.length > 0 ? item.images : ['https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80'],
+        badges: Array.isArray(item.badges) ? item.badges : ['Certified', '6 M Warranty'],
+        specs: item.specs || { mileage: '40 kmpl', fuelType: 'Petrol', brakes: 'ABS', transmission: 'Manual', rto: 'BR-01 Patna', insurance: 'Valid 2027' }
+      }));
     } catch {
       return defaultStaticBikes;
     }
