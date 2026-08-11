@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { X, Calendar, Clock, User, Phone, CheckCircle2, Shield } from 'lucide-react';
+import { testDrivesAPI } from '../services/api';
 
-export default function TestDriveModal({ bike, onClose }) {
+export default function TestDriveModal({ bike, onClose, onAddTestDrive }) {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -15,18 +16,28 @@ export default function TestDriveModal({ bike, onClose }) {
     e.preventDefault();
     setSubmitted(true);
 
+    const newEntry = {
+      id: `td-${Date.now()}`,
+      name: formData.name,
+      phone: formData.phone,
+      bikeName: bike?.name || 'Selected Vehicle',
+      date: formData.date || 'Tomorrow',
+      time: formData.time || '11:00 AM',
+      status: 'Pending',
+      submittedAt: new Date().toLocaleDateString('en-IN')
+    };
+
+    // 1. Call PHP MySQL Backend API
+    testDrivesAPI.add(newEntry);
+
+    // 2. Immediate React State Sync
+    if (onAddTestDrive) {
+      onAddTestDrive(newEntry);
+    }
+
+    // 3. Local persistence fallback
     try {
       const existing = JSON.parse(localStorage.getItem('bike_bazaar_testdrives_db') || '[]');
-      const newEntry = {
-        id: `td-${Date.now()}`,
-        name: formData.name,
-        phone: formData.phone,
-        bikeName: bike?.name || 'Selected Vehicle',
-        date: formData.date || 'Tomorrow',
-        time: formData.time || '11:00 AM',
-        status: 'Pending',
-        submittedAt: new Date().toLocaleDateString('en-IN')
-      };
       const updated = [newEntry, ...existing];
       localStorage.setItem('bike_bazaar_testdrives_db', JSON.stringify(updated));
     } catch (err) {

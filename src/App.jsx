@@ -15,6 +15,7 @@ import ContactPage from './pages/ContactPage';
 import AdminPage from './pages/AdminPage';
 
 import { bikesData as defaultStaticBikes } from './data/bikesData';
+import { bikesAPI, testDrivesAPI, sellLeadsAPI, contactLeadsAPI } from './services/api';
 
 export default function App() {
   // Initialize activeTab from URL hash if present
@@ -80,7 +81,11 @@ export default function App() {
   const [testDrives, setTestDrives] = useState(() => {
     try {
       const saved = localStorage.getItem('bike_bazaar_testdrives_db');
-      return saved ? JSON.parse(saved) : [
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return [
         { id: 'td-101', name: 'Rohan Sharma', phone: '9876543210', bikeName: 'Royal Enfield Classic 350', date: '2026-08-12', time: '11:00 AM', status: 'Pending' },
         { id: 'td-102', name: 'Vikram Singh', phone: '7480078779', bikeName: 'Honda Activa 6G', date: '2026-08-13', time: '03:00 PM', status: 'Confirmed' }
       ];
@@ -93,7 +98,11 @@ export default function App() {
   const [sellLeads, setSellLeads] = useState(() => {
     try {
       const saved = localStorage.getItem('bike_bazaar_sell_leads_db');
-      return saved ? JSON.parse(saved) : [
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return [
         { id: 'sell-201', sellerName: 'Amit Verma', sellerPhone: '9123456789', brand: 'TVS', modelName: 'Apache RTR 160', year: '2021', km: '18000', owner: '1st Owner', estimatedPrice: '₹75,000 - ₹82,000', status: 'New Lead' }
       ];
     } catch {
@@ -131,8 +140,79 @@ export default function App() {
     }
   };
 
-  // Load persisted user session on mount
+  // 4. DYNAMIC CONTACT INQUIRIES STATE (Persistent in localStorage)
+  const [contactLeads, setContactLeads] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bike_bazaar_contact_leads_db');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+      return [
+        { id: 'msg-303', name: 'AD Kumar', phone: '06202642698', subject: 'Buying Used Bike', message: 'giu', status: 'New Inquiry', submittedAt: '11/08/2026 05:39 PM' },
+        { id: 'msg-302', name: 'Ashit Kumar', phone: '06202642698', subject: 'Buying Used Bike', message: 'hi', status: 'New Inquiry', submittedAt: '11/08/2026 05:35 PM' },
+        { id: 'msg-301', name: 'Manish Kumar', phone: '9876543210', subject: 'KTM Superbike Inquiry', message: 'Hi, I want to visit showroom to inspect Raj KTM.', status: 'New Inquiry', submittedAt: '11/08/2026 11:30 AM' }
+      ];
+    } catch {
+      return [];
+    }
+  });
+
+  const handleUpdateContactLeads = (newContactLeads) => {
+    setContactLeads(newContactLeads);
+    try {
+      localStorage.setItem('bike_bazaar_contact_leads_db', JSON.stringify(newContactLeads));
+    } catch (err) {
+      console.error('Failed to save contact leads DB', err);
+    }
+  };
+
+  // Load initial data from PHP MySQL Backend API on mount (with safe catalog & lead merging)
   useEffect(() => {
+    async function loadBackendData() {
+      try {
+        const remoteBikes = await bikesAPI.getAll();
+        if (remoteBikes && Array.isArray(remoteBikes) && remoteBikes.length > 0) {
+          setBikes((prevBikes) => {
+            const map = new Map();
+            prevBikes.forEach((b) => b && b.id && map.set(b.id, b));
+            remoteBikes.forEach((b) => b && b.id && map.set(b.id, b));
+            return Array.from(map.values());
+          });
+        }
+
+        const remoteTD = await testDrivesAPI.getAll();
+        if (remoteTD && Array.isArray(remoteTD) && remoteTD.length > 0) {
+          setTestDrives((prev) => {
+            const map = new Map();
+            [...prev, ...remoteTD].forEach((item) => item && item.id && map.set(item.id, item));
+            return Array.from(map.values());
+          });
+        }
+
+        const remoteSL = await sellLeadsAPI.getAll();
+        if (remoteSL && Array.isArray(remoteSL) && remoteSL.length > 0) {
+          setSellLeads((prev) => {
+            const map = new Map();
+            [...prev, ...remoteSL].forEach((item) => item && item.id && map.set(item.id, item));
+            return Array.from(map.values());
+          });
+        }
+
+        const remoteCL = await contactLeadsAPI.getAll();
+        if (remoteCL && Array.isArray(remoteCL) && remoteCL.length > 0) {
+          setContactLeads((prev) => {
+            const map = new Map();
+            [...prev, ...remoteCL].forEach((item) => item && item.id && map.set(item.id, item));
+            return Array.from(map.values());
+          });
+        }
+      } catch (err) {
+        console.info('[Backend Notice] PHP server offline, running in local mode.');
+      }
+    }
+    loadBackendData();
+
     try {
       const savedUser = localStorage.getItem('bike_bazaar_user');
       if (savedUser) {
@@ -244,6 +324,8 @@ export default function App() {
         onUpdateTestDrives={handleUpdateTestDrives}
         sellLeads={sellLeads}
         onUpdateSellLeads={handleUpdateSellLeads}
+        contactLeads={contactLeads}
+        onUpdateContactLeads={handleUpdateContactLeads}
         onNavigate={handleNavigate}
       />
     );
@@ -298,13 +380,13 @@ export default function App() {
           />
         )}
 
-        {activeTab === 'sell' && <SellPage />}
+        {activeTab === 'sell' && <SellPage onAddSellLead={(newEntry) => handleUpdateSellLeads([newEntry, ...sellLeads])} />}
 
         {activeTab === 'emi' && <EmiPage defaultPrice={defaultEmiPrice} />}
 
         {activeTab === 'about' && <AboutPage onNavigate={handleNavigate} />}
 
-        {activeTab === 'contact' && <ContactPage />}
+        {activeTab === 'contact' && <ContactPage onAddContactLead={(newEntry) => handleUpdateContactLeads([newEntry, ...contactLeads])} />}
       </main>
 
       {/* Footer */}
@@ -341,6 +423,7 @@ export default function App() {
               window.history.back();
             }
           }}
+          onAddTestDrive={(newEntry) => handleUpdateTestDrives([newEntry, ...testDrives])}
         />
       )}
 

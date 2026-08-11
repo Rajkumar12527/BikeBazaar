@@ -6,7 +6,7 @@ export default function Header({ activeTab, setActiveTab, wishlistCount, onOpenA
 
   const navLinks = [
     { id: 'home', label: 'Home' },
-    { id: 'shop', label: 'Bikes & Scooties' },
+    { id: 'shop', label: 'Shop' },
     { id: 'sell', label: 'Sell Your Bike' },
     { id: 'emi', label: 'EMI Calculator' },
     { id: 'about', label: 'About Us' },
@@ -24,7 +24,7 @@ export default function Header({ activeTab, setActiveTab, wishlistCount, onOpenA
   };
 
   return (
-    <header className="header" style={{ position: 'sticky', top: 0, zIndex: 1000, backgroundColor: 'rgba(255, 255, 255, 0.97)', backdropFilter: 'blur(10px)' }}>
+    <header className="header" style={{ position: 'sticky', top: 0, zIndex: 9999 }}>
       
       {/* Main Navbar */}
       <div className="container">

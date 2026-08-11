@@ -6,14 +6,17 @@ import {
   Sliders, MessageSquare, LogOut, ShieldCheck, MapPin, Gauge, Fuel, Zap, ArrowLeft, Upload
 } from 'lucide-react';
 import { BRANDS } from '../data/bikesData';
+import { bikesAPI, testDrivesAPI, sellLeadsAPI, contactLeadsAPI, adminAuthAPI } from '../services/api';
 
 export default function AdminPage({ 
-  bikes, 
+  bikes = [], 
   onUpdateBikes,
-  testDrives,
+  testDrives = [],
   onUpdateTestDrives,
-  sellLeads,
+  sellLeads = [],
   onUpdateSellLeads,
+  contactLeads = [],
+  onUpdateContactLeads,
   onNavigate
 }) {
   // Admin Auth State
@@ -22,6 +25,7 @@ export default function AdminPage({
   const [adminPassword, setAdminPassword] = useState('');
   const [authError, setAuthError] = useState('');
   const [authSuccess, setAuthSuccess] = useState('');
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   // Forgot Owner Password Reset State
   const [showForgotModal, setShowForgotModal] = useState(false);
@@ -137,6 +141,60 @@ export default function AdminPage({
     }
   }, []);
 
+  // Auto sync forms data from localStorage on mount & dashboard view
+  useEffect(() => {
+    try {
+      const savedTestDrives = localStorage.getItem('bike_bazaar_testdrives_db');
+      if (savedTestDrives && onUpdateTestDrives) {
+        const parsed = JSON.parse(savedTestDrives);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const map = new Map();
+          [...parsed, ...testDrives].forEach(i => i && i.id && map.set(i.id, i));
+          const merged = Array.from(map.values());
+          onUpdateTestDrives(merged);
+        }
+      }
+
+      const savedSellLeads = localStorage.getItem('bike_bazaar_sell_leads_db');
+      if (savedSellLeads && onUpdateSellLeads) {
+        const parsed = JSON.parse(savedSellLeads);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const map = new Map();
+          [...parsed, ...sellLeads].forEach(i => i && i.id && map.set(i.id, i));
+          const merged = Array.from(map.values());
+          onUpdateSellLeads(merged);
+        }
+      }
+
+      const savedContactLeads = localStorage.getItem('bike_bazaar_contact_leads_db');
+      if (savedContactLeads && onUpdateContactLeads) {
+        const parsed = JSON.parse(savedContactLeads);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const map = new Map();
+          [...parsed, ...contactLeads].forEach(i => i && i.id && map.set(i.id, i));
+          const merged = Array.from(map.values());
+          onUpdateContactLeads(merged);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to sync leads in AdminPage', err);
+    }
+  }, []);
+
+  const handleUpdateContactLeadStatus = (id, newStatus) => {
+    contactLeadsAPI.updateStatus(id, newStatus);
+    const updated = (contactLeads || []).map((c) => c.id === id ? { ...c, status: newStatus } : c);
+    if (onUpdateContactLeads) onUpdateContactLeads(updated);
+  };
+
+  const handleDeleteContactLead = (id) => {
+    if (window.confirm('Kya aap is customer message inquiry ko delete karna chahte hain?')) {
+      contactLeadsAPI.delete(id);
+      const updated = (contactLeads || []).filter((c) => c.id !== id);
+      if (onUpdateContactLeads) onUpdateContactLeads(updated);
+    }
+  };
+
   // Get current active password (defaults to 'admin123' until changed)
   const getStoredPassword = () => {
     try {
@@ -241,54 +299,47 @@ export default function AdminPage({
     
     let updatedBikes = [];
     if (editingBikeId) {
-      // Update existing bike
-      updatedBikes = bikes.map((b) => {
-        if (b.id === editingBikeId) {
-          return {
-            ...b,
-            name: bikeFormData.name,
-            brand: bikeFormData.brand,
-            category: bikeFormData.category,
-            type: bikeFormData.type,
-            price: Number(bikeFormData.price),
-            originalPrice: Number(bikeFormData.originalPrice) || Math.round(Number(bikeFormData.price) * 1.15),
-            year: Number(bikeFormData.year),
-            km: Number(bikeFormData.km),
-            owner: bikeFormData.owner,
-            cc: Number(bikeFormData.cc),
-            score: Number(bikeFormData.score),
-            location: bikeFormData.location,
-            isFeatured: bikeFormData.isFeatured,
-            status: bikeFormData.status,
-            images: bikeFormData.images,
-            specs: {
-              ...b.specs,
-              mileage: bikeFormData.mileage,
-              fuelType: bikeFormData.fuelType,
-              power: bikeFormData.power,
-              transmission: bikeFormData.transmission,
-              brakes: bikeFormData.brakes,
-              rto: bikeFormData.rto,
-              insurance: bikeFormData.insurance
-            }
-          };
+      const targetBike = bikes.find(b => b.id === editingBikeId);
+      const updatedBike = {
+        ...targetBike,
+        name: bikeFormData.name,
+        brand: bikeFormData.brand,
+        model: bikeFormData.brand + ' ' + bikeFormData.name,
+        price: Number(bikeFormData.price),
+        originalPrice: Number(bikeFormData.originalPrice),
+        year: Number(bikeFormData.year),
+        km: Number(bikeFormData.km),
+        owner: bikeFormData.owner,
+        cc: String(bikeFormData.cc),
+        score: Number(bikeFormData.score),
+        location: bikeFormData.location,
+        isFeatured: bikeFormData.isFeatured,
+        status: bikeFormData.status,
+        images: bikeFormData.images,
+        specs: {
+          mileage: bikeFormData.mileage,
+          fuelType: bikeFormData.fuelType,
+          power: bikeFormData.power,
+          transmission: bikeFormData.transmission,
+          brakes: bikeFormData.brakes,
+          rto: bikeFormData.rto,
+          insurance: bikeFormData.insurance
         }
-        return b;
-      });
+      };
+      bikesAPI.update(updatedBike);
+      updatedBikes = bikes.map((b) => b.id === editingBikeId ? updatedBike : b);
     } else {
-      // Add new bike
       const newBike = {
         id: `bike-${Date.now()}`,
         name: bikeFormData.name,
         brand: bikeFormData.brand,
-        category: bikeFormData.category,
-        type: bikeFormData.type,
+        model: bikeFormData.brand + ' ' + bikeFormData.name,
         price: Number(bikeFormData.price),
         originalPrice: Number(bikeFormData.originalPrice) || Math.round(Number(bikeFormData.price) * 1.15),
         year: Number(bikeFormData.year),
         km: Number(bikeFormData.km),
         owner: bikeFormData.owner,
-        cc: Number(bikeFormData.cc),
+        cc: String(bikeFormData.cc),
         score: Number(bikeFormData.score),
         location: bikeFormData.location,
         isFeatured: bikeFormData.isFeatured,
@@ -305,6 +356,7 @@ export default function AdminPage({
           insurance: bikeFormData.insurance
         }
       };
+      bikesAPI.add(newBike);
       updatedBikes = [newBike, ...bikes];
     }
 
@@ -315,6 +367,7 @@ export default function AdminPage({
   // Delete Bike Listing
   const handleDeleteBike = (bikeId) => {
     if (window.confirm('Kya aap sach me is vehicle ko website inventory se delete karna chahte hain?')) {
+      bikesAPI.delete(bikeId);
       const updated = bikes.filter((b) => b.id !== bikeId);
       onUpdateBikes(updated);
     }
@@ -353,21 +406,25 @@ export default function AdminPage({
 
   // Status Updaters
   const handleUpdateTestDriveStatus = (id, newStatus) => {
+    testDrivesAPI.updateStatus(id, newStatus);
     const updated = testDrives.map((td) => td.id === id ? { ...td, status: newStatus } : td);
     onUpdateTestDrives(updated);
   };
 
   const handleDeleteTestDrive = (id) => {
+    testDrivesAPI.delete(id);
     const updated = testDrives.filter((td) => td.id !== id);
     onUpdateTestDrives(updated);
   };
 
   const handleUpdateSellLeadStatus = (id, newStatus) => {
+    sellLeadsAPI.updateStatus(id, newStatus);
     const updated = sellLeads.map((sl) => sl.id === id ? { ...sl, status: newStatus } : sl);
     onUpdateSellLeads(updated);
   };
 
   const handleDeleteSellLead = (id) => {
+    sellLeadsAPI.delete(id);
     const updated = sellLeads.filter((sl) => sl.id !== id);
     onUpdateSellLeads(updated);
   };
@@ -542,121 +599,222 @@ export default function AdminPage({
         </div>
       ) : (
         /* ---------------- FULL-PAGE STANDALONE DASHBOARD ---------------- */
-        <div style={{ display: 'flex', minHeight: '100vh' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', backgroundColor: '#090d16' }}>
           
-          {/* Left Dark Enterprise Sidebar */}
-          <div style={{
-            width: '250px',
+          {/* Top Header Mobile Control Bar (Visible on mobile screens) */}
+          <div className="admin-mobile-bar" style={{
             backgroundColor: '#0f172a',
-            borderRight: '1px solid #1e293b',
-            display: 'flex',
-            flexDirection: 'column',
-            padding: '1.25rem 0.85rem',
-            flexShrink: 0
+            borderBottom: '1px solid #1e293b',
+            padding: '0.85rem 1rem',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            position: 'sticky',
+            top: 0,
+            zIndex: 110
           }}>
-            {/* Logo Brand Header */}
-            <div 
-              onClick={() => onNavigate('home')} 
-              style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '2rem', cursor: 'pointer', padding: '0 0.5rem' }}
-            >
-              <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#1e40af', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>
-                👑
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#1e40af', display: 'grid', placeItems: 'center', color: '#ffffff', fontWeight: 900 }}>👑</div>
               <div>
-                <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#ffffff', fontFamily: 'Outfit, sans-serif' }}>
-                  BIKE BAZAAR
-                </div>
-                <div style={{ fontSize: '0.62rem', color: '#38bdf8', fontWeight: 800, letterSpacing: '0.1em' }}>
-                  OWNER DASHBOARD
-                </div>
+                <div style={{ fontWeight: 900, color: '#ffffff', fontSize: '0.95rem' }}>BIKE BAZAAR</div>
+                <div style={{ fontSize: '0.6rem', color: '#38bdf8', fontWeight: 800 }}>OWNER PORTAL</div>
               </div>
             </div>
 
-            {/* Nav Menu */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <button
-                onClick={() => setActiveTab('overview')}
+                onClick={() => setMobileNavOpen(!mobileNavOpen)}
                 style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.75rem 0.9rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  fontSize: '0.88rem',
+                  backgroundColor: '#1e293b',
+                  color: '#ffffff',
+                  border: '1px solid #334155',
+                  padding: '0.4rem 0.75rem',
+                  borderRadius: '8px',
+                  fontSize: '0.8rem',
                   fontWeight: 800,
                   cursor: 'pointer',
-                  backgroundColor: activeTab === 'overview' ? '#1e40af' : 'transparent',
-                  color: activeTab === 'overview' ? '#ffffff' : '#94a3b8',
-                  textAlign: 'left'
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
                 }}
               >
-                <TrendingUp size={18} />
-                <span>Overview Stats</span>
+                {mobileNavOpen ? <X size={16} /> : <Sliders size={16} />}
+                <span>Menu</span>
               </button>
+              <button 
+                onClick={() => onNavigate('home')} 
+                style={{ backgroundColor: '#1e40af', color: '#ffffff', border: 'none', padding: '0.4rem 0.65rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800 }}
+              >
+                Exit
+              </button>
+            </div>
+          </div>
 
-              <button
-                onClick={() => setActiveTab('inventory')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.75rem 0.9rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  fontSize: '0.88rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  backgroundColor: activeTab === 'inventory' ? '#1e40af' : 'transparent',
-                  color: activeTab === 'inventory' ? '#ffffff' : '#94a3b8',
-                  textAlign: 'left'
-                }}
-              >
-                <Bike size={18} />
-                <span>Manage Vehicles ({bikes.length})</span>
+          {/* Mobile Drawer Dropdown Menu */}
+          {mobileNavOpen && (
+            <div style={{
+              backgroundColor: '#0f172a',
+              borderBottom: '1px solid #1e293b',
+              padding: '1rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.4rem',
+              zIndex: 105
+            }}>
+              <button onClick={() => { setActiveTab('overview'); setMobileNavOpen(false); }} style={{ backgroundColor: activeTab === 'overview' ? '#1e40af' : '#1e293b', color: '#ffffff', padding: '0.65rem 0.85rem', borderRadius: '8px', fontWeight: 800, border: 'none', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <TrendingUp size={16} /> Overview Stats
               </button>
+              <button onClick={() => { setActiveTab('inventory'); setMobileNavOpen(false); }} style={{ backgroundColor: activeTab === 'inventory' ? '#1e40af' : '#1e293b', color: '#ffffff', padding: '0.65rem 0.85rem', borderRadius: '8px', fontWeight: 800, border: 'none', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Bike size={16} /> Manage Vehicles ({bikes.length})
+              </button>
+              <button onClick={() => { setActiveTab('testdrives'); setMobileNavOpen(false); }} style={{ backgroundColor: activeTab === 'testdrives' ? '#1e40af' : '#1e293b', color: '#ffffff', padding: '0.65rem 0.85rem', borderRadius: '8px', fontWeight: 800, border: 'none', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Calendar size={16} /> Test Drives ({testDrives.length})
+              </button>
+              <button onClick={() => { setActiveTab('sellleads'); setMobileNavOpen(false); }} style={{ backgroundColor: activeTab === 'sellleads' ? '#1e40af' : '#1e293b', color: '#ffffff', padding: '0.65rem 0.85rem', borderRadius: '8px', fontWeight: 800, border: 'none', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <FileText size={16} /> Sell Enquiries ({sellLeads.length})
+              </button>
+              <button onClick={() => { setActiveTab('contactleads'); setMobileNavOpen(false); }} style={{ backgroundColor: activeTab === 'contactleads' ? '#1e40af' : '#1e293b', color: '#ffffff', padding: '0.65rem 0.85rem', borderRadius: '8px', fontWeight: 800, border: 'none', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <MessageSquare size={16} /> Customer Messages ({(contactLeads || []).length})
+              </button>
+              <button onClick={() => { setActiveTab('security'); setMobileNavOpen(false); }} style={{ backgroundColor: activeTab === 'security' ? '#1e40af' : '#1e293b', color: '#ffffff', padding: '0.65rem 0.85rem', borderRadius: '8px', fontWeight: 800, border: 'none', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Key size={16} /> Security & Password
+              </button>
+            </div>
+          )}
 
-              <button
-                onClick={() => setActiveTab('testdrives')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.75rem 0.9rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  fontSize: '0.88rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  backgroundColor: activeTab === 'testdrives' ? '#1e40af' : 'transparent',
-                  color: activeTab === 'testdrives' ? '#ffffff' : '#94a3b8',
-                  textAlign: 'left'
-                }}
+          <div style={{ display: 'flex', flexGrow: 1 }}>
+            {/* Left Dark Enterprise Sidebar (Desktop only) */}
+            <div className="admin-desktop-sidebar" style={{
+              width: '250px',
+              backgroundColor: '#0f172a',
+              borderRight: '1px solid #1e293b',
+              flexDirection: 'column',
+              padding: '1.25rem 0.85rem',
+              flexShrink: 0
+            }}>
+              {/* Logo Brand Header */}
+              <div 
+                onClick={() => onNavigate('home')} 
+                style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '2rem', cursor: 'pointer', padding: '0 0.5rem' }}
               >
-                <Calendar size={18} />
-                <span>Test Drives ({testDrives.length})</span>
-              </button>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', backgroundColor: '#1e40af', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900 }}>
+                  👑
+                </div>
+                <div>
+                  <div style={{ fontWeight: 900, fontSize: '1.1rem', color: '#ffffff', fontFamily: 'Outfit, sans-serif' }}>
+                    BIKE BAZAAR
+                  </div>
+                  <div style={{ fontSize: '0.62rem', color: '#38bdf8', fontWeight: 800, letterSpacing: '0.1em' }}>
+                    OWNER DASHBOARD
+                  </div>
+                </div>
+              </div>
 
-              <button
-                onClick={() => setActiveTab('sellleads')}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.75rem 0.9rem',
-                  borderRadius: '12px',
-                  border: 'none',
-                  fontSize: '0.88rem',
-                  fontWeight: 800,
-                  cursor: 'pointer',
-                  backgroundColor: activeTab === 'sellleads' ? '#1e40af' : 'transparent',
-                  color: activeTab === 'sellleads' ? '#ffffff' : '#94a3b8',
-                  textAlign: 'left'
-                }}
-              >
-                <FileText size={18} />
-                <span>Sell Enquiries ({sellLeads.length})</span>
-              </button>
+              {/* Nav Menu */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <button
+                  onClick={() => setActiveTab('overview')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.75rem 0.9rem',
+                    borderRadius: '12px',
+                    border: 'none',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    backgroundColor: activeTab === 'overview' ? '#1e40af' : 'transparent',
+                    color: activeTab === 'overview' ? '#ffffff' : '#94a3b8',
+                    textAlign: 'left'
+                  }}
+                >
+                  <TrendingUp size={18} />
+                  <span>Overview Stats</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('inventory')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.75rem 0.9rem',
+                    borderRadius: '12px',
+                    border: 'none',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    backgroundColor: activeTab === 'inventory' ? '#1e40af' : 'transparent',
+                    color: activeTab === 'inventory' ? '#ffffff' : '#94a3b8',
+                    textAlign: 'left'
+                  }}
+                >
+                  <Bike size={18} />
+                  <span>Manage Vehicles ({bikes.length})</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('testdrives')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.75rem 0.9rem',
+                    borderRadius: '12px',
+                    border: 'none',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    backgroundColor: activeTab === 'testdrives' ? '#1e40af' : 'transparent',
+                    color: activeTab === 'testdrives' ? '#ffffff' : '#94a3b8',
+                    textAlign: 'left'
+                  }}
+                >
+                  <Calendar size={18} />
+                  <span>Test Drives ({testDrives.length})</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('sellleads')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.75rem 0.9rem',
+                    borderRadius: '12px',
+                    border: 'none',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    backgroundColor: activeTab === 'sellleads' ? '#1e40af' : 'transparent',
+                    color: activeTab === 'sellleads' ? '#ffffff' : '#94a3b8',
+                    textAlign: 'left'
+                  }}
+                >
+                  <FileText size={18} />
+                  <span>Sell Enquiries ({sellLeads.length})</span>
+                </button>
+
+                <button
+                  onClick={() => setActiveTab('contactleads')}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '0.75rem 0.9rem',
+                    borderRadius: '12px',
+                    border: 'none',
+                    fontSize: '0.88rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    backgroundColor: activeTab === 'contactleads' ? '#1e40af' : 'transparent',
+                    color: activeTab === 'contactleads' ? '#ffffff' : '#94a3b8',
+                    textAlign: 'left'
+                  }}
+                >
+                  <MessageSquare size={18} />
+                  <span>Customer Messages ({(contactLeads || []).length})</span>
+                </button>
 
               <button
                 onClick={() => setActiveTab('security')}
@@ -708,12 +866,11 @@ export default function AdminPage({
           <div style={{ flexGrow: 1, display: 'flex', flexDirection: 'column', backgroundColor: '#090d16', overflowX: 'hidden' }}>
             
             {/* Top Workspace Navbar */}
-            <div style={{
+            <div className="admin-top-workspace-bar" style={{
               height: '64px',
               backgroundColor: '#0f172a',
               borderBottom: '1px solid #1e293b',
               padding: '0 1.75rem',
-              display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between'
             }}>
@@ -756,7 +913,7 @@ export default function AdminPage({
             </div>
 
             {/* Dashboard Content Container */}
-            <div style={{ padding: '2rem', flexGrow: 1, overflowY: 'auto' }}>
+            <div className="admin-content-container" style={{ flexGrow: 1, overflowY: 'auto' }}>
               
               {/* ----------------- TAB 1: OVERVIEW METRICS ----------------- */}
               {activeTab === 'overview' && (
@@ -770,46 +927,99 @@ export default function AdminPage({
                     </p>
                   </div>
 
-                  {/* 4 Summary Stat Cards */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
-                    <div style={{ backgroundColor: '#0f172a', padding: '1.5rem', borderRadius: '20px', border: '1px solid #1e293b' }}>
-                      <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Total Stock Value</div>
-                      <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#38bdf8', margin: '0.4rem 0' }}>
+                  {/* 5 Summary Stat Cards */}
+                  <div className="admin-stat-grid">
+                    <div style={{ backgroundColor: '#0f172a', padding: '1.25rem', borderRadius: '18px', border: '1px solid #1e293b', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Total Stock Value</div>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#1e3a8a', color: '#38bdf8', display: 'grid', placeItems: 'center' }}>💰</div>
+                      </div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#38bdf8', margin: '0.4rem 0' }}>
                         ₹{totalInventoryValue.toLocaleString('en-IN')}
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 700 }}>
+                      <div style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: 700 }}>
                         {bikes.length} Vehicles Listed Live
                       </div>
                     </div>
 
-                    <div style={{ backgroundColor: '#0f172a', padding: '1.5rem', borderRadius: '20px', border: '1px solid #1e293b' }}>
-                      <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Test Drive Bookings</div>
-                      <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#f59e0b', margin: '0.4rem 0' }}>
-                        {testDrives.length} Appointments
+                    <div style={{ backgroundColor: '#0f172a', padding: '1.25rem', borderRadius: '18px', border: '1px solid #1e293b', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Test Drive Bookings</div>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#78350f', color: '#f59e0b', display: 'grid', placeItems: 'center' }}>📅</div>
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: '#fbbf24', fontWeight: 700 }}>
-                        {testDrives.filter(t => t.status === 'Pending').length} Pending Confirmation
+                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#f59e0b', margin: '0.4rem 0' }}>
+                        {testDrives.length} Bookings
                       </div>
-                    </div>
-
-                    <div style={{ backgroundColor: '#0f172a', padding: '1.5rem', borderRadius: '20px', border: '1px solid #1e293b' }}>
-                      <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Sell / Resale Enquiries</div>
-                      <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#ef4444', margin: '0.4rem 0' }}>
-                        {sellLeads.length} Customer Leads
-                      </div>
-                      <div style={{ fontSize: '0.8rem', color: '#60a5fa', fontWeight: 700 }}>
-                        Doorstep Valuation Forms
+                      <div style={{ fontSize: '0.78rem', color: '#fbbf24', fontWeight: 700 }}>
+                        {testDrives.filter(t => t.status === 'Pending').length} Pending Slots
                       </div>
                     </div>
 
-                    <div style={{ backgroundColor: '#0f172a', padding: '1.5rem', borderRadius: '20px', border: '1px solid #1e293b' }}>
-                      <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Quality Standard</div>
-                      <div style={{ fontSize: '1.8rem', fontWeight: 900, color: '#10b981', margin: '0.4rem 0' }}>
+                    <div style={{ backgroundColor: '#0f172a', padding: '1.25rem', borderRadius: '18px', border: '1px solid #1e293b', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Sell / Resale Leads</div>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#7f1d1d', color: '#ef4444', display: 'grid', placeItems: 'center' }}>🏷️</div>
+                      </div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ef4444', margin: '0.4rem 0' }}>
+                        {sellLeads.length} Leads
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: '#60a5fa', fontWeight: 700 }}>
+                        Valuation Form Submitted
+                      </div>
+                    </div>
+
+                    <div style={{ backgroundColor: '#0f172a', padding: '1.25rem', borderRadius: '18px', border: '1px solid #1e293b', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Customer Messages</div>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#064e3b', color: '#10b981', display: 'grid', placeItems: 'center' }}>💬</div>
+                      </div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#10b981', margin: '0.4rem 0' }}>
+                        {(contactLeads || []).length} Messages
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: '#a7f3d0', fontWeight: 700 }}>
+                        Contact Us Queries
+                      </div>
+                    </div>
+
+                    <div style={{ backgroundColor: '#0f172a', padding: '1.25rem', borderRadius: '18px', border: '1px solid #1e293b', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.3)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase' }}>Quality Check</div>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#4c1d95', color: '#a78bfa', display: 'grid', placeItems: 'center' }}>🏆</div>
+                      </div>
+                      <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#a78bfa', margin: '0.4rem 0' }}>
                         100+ Points
                       </div>
-                      <div style={{ fontSize: '0.8rem', color: '#a7f3d0', fontWeight: 700 }}>
-                        Certified Warranty Guarantee
+                      <div style={{ fontSize: '0.78rem', color: '#ddd6fe', fontWeight: 700 }}>
+                        6 M Warranty Store
                       </div>
+                    </div>
+                  </div>
+
+                  {/* Recent Activity Feed */}
+                  <div style={{ backgroundColor: '#0f172a', borderRadius: '20px', border: '1px solid #1e293b', padding: '1.5rem', marginBottom: '2rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                      <h3 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#ffffff' }}>⚡ Recent Customer Inquiries Stream</h3>
+                      <button onClick={() => setActiveTab('contactleads')} style={{ backgroundColor: '#1e293b', color: '#38bdf8', border: 'none', padding: '0.4rem 0.8rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 800, cursor: 'pointer' }}>
+                        View All Messages &rarr;
+                      </button>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      {(contactLeads || []).slice(0, 4).map((msg) => (
+                        <div key={msg.id} style={{ backgroundColor: '#1e293b', padding: '0.85rem 1rem', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                          <div>
+                            <div style={{ fontWeight: 800, color: '#ffffff', fontSize: '0.9rem' }}>💬 {msg.name} ({msg.subject})</div>
+                            <div style={{ fontSize: '0.8rem', color: '#cbd5e1', marginTop: '0.2rem' }}>"{msg.message}"</div>
+                            <div style={{ fontSize: '0.72rem', color: '#38bdf8', marginTop: '0.2rem' }}>📞 +91 {msg.phone} • {msg.submittedAt}</div>
+                          </div>
+                          <a href={`tel:+91${msg.phone}`} style={{ backgroundColor: '#1e40af', color: '#ffffff', padding: '0.35rem 0.75rem', borderRadius: '8px', fontSize: '0.78rem', fontWeight: 800, textDecoration: 'none' }}>
+                            Call Customer
+                          </a>
+                        </div>
+                      ))}
+                      {(contactLeads || []).length === 0 && (
+                        <div style={{ color: '#64748b', fontSize: '0.85rem', textAlign: 'center', padding: '1rem' }}>No recent customer messages yet. Submit a query on Contact Us page to test!</div>
+                      )}
                     </div>
                   </div>
 
@@ -1169,7 +1379,116 @@ export default function AdminPage({
                 </div>
               )}
 
-              {/* ----------------- TAB 5: SECURITY & CHANGE PASSWORD ----------------- */}
+              {/* ----------------- TAB 5: CUSTOMER MESSAGES & CONTACT LEADS ----------------- */}
+              {activeTab === 'contactleads' && (
+                <div>
+                  <div style={{ marginBottom: '1.5rem' }}>
+                    <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: '#ffffff', fontFamily: 'Outfit, sans-serif' }}>
+                      Customer Messages & Support Enquiries ({(contactLeads || []).length})
+                    </h1>
+                    <p style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
+                      Contact Us form aur website queries dwara aaye huye sabhi customer messages
+                    </p>
+                  </div>
+
+                  <div style={{ backgroundColor: '#0f172a', borderRadius: '20px', border: '1px solid #1e293b', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.88rem', minWidth: '680px' }}>
+                      <thead>
+                        <tr style={{ backgroundColor: '#1e293b', color: '#94a3b8', fontWeight: 800, borderBottom: '1px solid #334155' }}>
+                          <th style={{ padding: '1rem' }}>Customer Details</th>
+                          <th style={{ padding: '1rem' }}>Subject & Topic</th>
+                          <th style={{ padding: '1rem' }}>Message Content</th>
+                          <th style={{ padding: '1rem' }}>Date Received</th>
+                          <th style={{ padding: '1rem' }}>Status</th>
+                          <th style={{ padding: '1rem', textAlign: 'right' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {(contactLeads || []).map((cl) => (
+                          <tr key={cl.id} style={{ borderBottom: '1px solid #1e293b' }}>
+                            <td style={{ padding: '1rem' }}>
+                              <div style={{ fontWeight: 800, color: '#ffffff', fontSize: '0.95rem' }}>{cl.name}</div>
+                              <div style={{ fontSize: '0.82rem', color: '#38bdf8', fontWeight: 800 }}>
+                                📞 +91 {cl.phone}
+                              </div>
+                            </td>
+                            <td style={{ padding: '1rem', fontWeight: 800, color: '#fbbf24' }}>
+                              {cl.subject || 'General Inquiry'}
+                            </td>
+                            <td style={{ padding: '1rem', color: '#cbd5e1', maxWidth: '280px' }}>
+                              {cl.message}
+                            </td>
+                            <td style={{ padding: '1rem', color: '#94a3b8', fontSize: '0.78rem' }}>
+                              {cl.submittedAt || 'Today'}
+                            </td>
+                            <td style={{ padding: '1rem' }}>
+                              <select 
+                                value={cl.status || 'New Inquiry'}
+                                onChange={(e) => handleUpdateContactLeadStatus(cl.id, e.target.value)}
+                                style={{
+                                  padding: '0.35rem 0.65rem',
+                                  borderRadius: '8px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 800,
+                                  border: '1px solid #334155',
+                                  backgroundColor: cl.status === 'Resolved' ? '#065f46' : cl.status === 'Contacted' ? '#1e40af' : '#78350f',
+                                  color: '#ffffff'
+                                }}
+                              >
+                                <option value="New Inquiry">New Inquiry</option>
+                                <option value="Contacted">Contacted</option>
+                                <option value="Resolved">Resolved</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: '1rem', textAlign: 'right' }}>
+                              <a
+                                href={`tel:+91${cl.phone}`}
+                                style={{
+                                  backgroundColor: '#1e40af',
+                                  color: '#ffffff',
+                                  padding: '0.4rem 0.75rem',
+                                  borderRadius: '8px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 800,
+                                  marginRight: '0.4rem',
+                                  textDecoration: 'none'
+                                }}
+                              >
+                                Call Customer
+                              </a>
+                              <a
+                                href={`https://wa.me/91${cl.phone}?text=Hello%20${cl.name},%20Bike%20Bazaar%20Patna%20se%20aapke%20msg%20inquiry%20ke%20silsile%20me%20contact%20kar%20rahe%20hain.`}
+                                target="_blank"
+                                rel="noreferrer"
+                                style={{
+                                  backgroundColor: '#065f46',
+                                  color: '#ffffff',
+                                  padding: '0.4rem 0.75rem',
+                                  borderRadius: '8px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 800,
+                                  marginRight: '0.4rem',
+                                  textDecoration: 'none'
+                                }}
+                              >
+                                WhatsApp
+                              </a>
+                              <button 
+                                onClick={() => handleDeleteContactLead(cl.id)}
+                                style={{ backgroundColor: '#450a0a', color: '#ef4444', border: 'none', padding: '0.4rem 0.6rem', borderRadius: '8px', cursor: 'pointer' }}
+                              >
+                                <Trash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {/* ----------------- TAB 6: SECURITY & CHANGE PASSWORD ----------------- */}
               {activeTab === 'security' && (
                 <div style={{ maxWidth: '520px' }}>
                   <div style={{ marginBottom: '1.5rem' }}>
@@ -1258,6 +1577,7 @@ export default function AdminPage({
             </div>
           </div>
         </div>
+      </div>
       )}
 
       {/* ----------------- COMPREHENSIVE ADD / EDIT VEHICLE FORM MODAL ----------------- */}

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { MapPin, Phone, Mail, Clock, MessageSquare, CheckCircle2, Send, ShieldCheck } from 'lucide-react';
+import { contactLeadsAPI } from '../services/api';
 
-export default function ContactPage() {
+export default function ContactPage({ onAddContactLead }) {
   const [formData, setFormData] = useState({
     name: '',
     phone: '',
@@ -14,12 +15,32 @@ export default function ContactPage() {
     e.preventDefault();
     setSubmitted(true);
 
-    // Trigger Formspree or mailto backup as requested by user for doubledoormusic12@gmail.com
-    const mailtoSubject = encodeURIComponent(`Bike Bazaar Inquiry: ${formData.subject} from ${formData.name}`);
-    const mailtoBody = encodeURIComponent(
-      `Name: ${formData.name}\nPhone: ${formData.phone}\nSubject: ${formData.subject}\nMessage: ${formData.message}\n\nSent to BIKE BAZAAR (doubledoormusic12@gmail.com)`
-    );
-    // Silent window open or form submit confirmation
+    const newEntry = {
+      id: `msg-${Date.now()}`,
+      name: formData.name || 'Customer Inquiry',
+      phone: formData.phone || '7480078779',
+      subject: formData.subject || 'General Inquiry',
+      message: formData.message || 'Showroom inquiry submitted.',
+      status: 'New Inquiry',
+      submittedAt: new Date().toLocaleDateString('en-IN')
+    };
+
+    // 1. Call PHP MySQL Backend API
+    contactLeadsAPI.add(newEntry);
+
+    // 2. Immediate React State Sync
+    if (onAddContactLead) {
+      onAddContactLead(newEntry);
+    }
+
+    // 3. Local persistence fallback
+    try {
+      const existing = JSON.parse(localStorage.getItem('bike_bazaar_contact_leads_db') || '[]');
+      const updated = [newEntry, ...existing];
+      localStorage.setItem('bike_bazaar_contact_leads_db', JSON.stringify(updated));
+    } catch (err) {
+      console.error('Failed to save contact inquiry', err);
+    }
   };
 
   const handleWhatsApp = () => {
@@ -129,8 +150,6 @@ export default function ContactPage() {
             ) : (
               <form 
                 onSubmit={handleSubmit}
-                action="https://formspree.io/f/doubledoormusic12@gmail.com"
-                method="POST"
                 className="contact-form"
               >
                 <div className="contact-field-group">
