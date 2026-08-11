@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Bike, Phone, MessageSquare, Menu, X, Heart, Search, ShieldCheck, Mail } from 'lucide-react';
+import { Bike, Phone, MessageSquare, Menu, X, Heart, ShieldCheck, Mail } from 'lucide-react';
 
 export default function Header({ activeTab, setActiveTab, wishlistCount }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -25,20 +25,14 @@ export default function Header({ activeTab, setActiveTab, wishlistCount }) {
 
   return (
     <header className="header">
-      {/* Top Announcement Bar */}
-      <div style={{
-        backgroundColor: '#0f172a',
-        color: '#f8fafc',
-        padding: '0.4rem 0',
-        fontSize: '0.8rem',
-        borderBottom: '1px solid #1e293b'
-      }}>
+      {/* Top Announcement Bar (Hidden on Mobile to save screen space) */}
+      <div className="top-bar">
         <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
             <ShieldCheck size={14} style={{ color: '#10b981' }} />
-            <span>Patna's #1 Certified Used Bike & Scooty Showroom</span>
+            <span>Patna's Certified Used Two-Wheeler Showroom • 100+ Point Inspection</span>
           </div>
-          <div style={{ display: 'none', mdDisplay: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
             <a href="tel:+917480078779" style={{ color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
               <Phone size={13} style={{ color: '#2563eb' }} />
               <span>+91 7480078779</span>
@@ -57,7 +51,7 @@ export default function Header({ activeTab, setActiveTab, wishlistCount }) {
           {/* Logo */}
           <div className="brand-logo" onClick={() => handleNavClick('home')} style={{ cursor: 'pointer' }}>
             <div className="brand-icon-box">
-              <Bike size={24} />
+              <Bike size={20} />
             </div>
             <div className="brand-text">
               <span className="brand-main">BIKE BAZAAR</span>
@@ -87,39 +81,46 @@ export default function Header({ activeTab, setActiveTab, wishlistCount }) {
                 style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', color: '#dc2626' }}
                 title="Saved vehicles"
               >
-                <Heart size={16} fill="#dc2626" />
+                <Heart size={15} fill="#dc2626" />
                 <span>{wishlistCount}</span>
               </button>
             )}
 
-            {/* WhatsApp Quick Button */}
+            {/* Desktop WhatsApp & Call Buttons */}
             <button 
-              className="btn-whatsapp btn-sm"
+              className="btn-whatsapp btn-sm desktop-only-btn"
               onClick={handleWhatsApp}
-              style={{ display: 'inline-flex' }}
             >
-              <MessageSquare size={16} />
+              <MessageSquare size={15} />
               <span>WhatsApp</span>
             </button>
 
-            {/* Direct Call Button */}
             <a 
               href="tel:+917480078779" 
-              className="btn-primary btn-sm"
-              style={{ display: 'inline-flex' }}
+              className="btn-primary btn-sm desktop-only-btn"
             >
-              <Phone size={16} />
+              <Phone size={15} />
               <span>Call 7480078779</span>
             </a>
 
-            {/* Mobile Hamburger */}
+            {/* Compact Mobile WhatsApp Icon Button */}
+            <button 
+              className="btn-whatsapp btn-sm mobile-only-btn"
+              onClick={handleWhatsApp}
+              style={{ padding: '0.35rem 0.55rem' }}
+              title="WhatsApp"
+            >
+              <MessageSquare size={16} />
+            </button>
+
+            {/* Mobile Hamburger Drawer Toggle */}
             <button 
               className="btn-secondary btn-sm" 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              style={{ display: 'flex', border: 'none', padding: '0.4rem' }}
+              style={{ display: 'flex', border: 'none', padding: '0.35rem', backgroundColor: 'transparent' }}
               aria-label="Toggle Navigation"
             >
-              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>
@@ -130,18 +131,20 @@ export default function Header({ activeTab, setActiveTab, wishlistCount }) {
         <div style={{
           backgroundColor: '#ffffff',
           borderBottom: '1px solid #e2e8f0',
-          padding: '1rem',
+          padding: '0.75rem 1rem',
           display: 'flex',
           flexDirection: 'column',
-          gap: '0.5rem'
+          gap: '0.35rem',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
         }}>
           {navLinks.map((link) => (
             <div
               key={link.id}
               onClick={() => handleNavClick(link.id)}
               style={{
-                padding: '0.75rem 1rem',
+                padding: '0.6rem 0.85rem',
                 fontWeight: 600,
+                fontSize: '0.92rem',
                 borderRadius: '8px',
                 backgroundColor: activeTab === link.id ? '#f1f5f9' : 'transparent',
                 color: activeTab === link.id ? '#1e40af' : '#0f172a',
@@ -152,21 +155,21 @@ export default function Header({ activeTab, setActiveTab, wishlistCount }) {
             </div>
           ))}
 
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.75rem', marginTop: '0.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.65rem', marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <button 
               onClick={handleWhatsApp}
               className="btn-whatsapp"
-              style={{ width: '100%', justifyContent: 'center' }}
+              style={{ width: '100%', justifyContent: 'center', padding: '0.65rem' }}
             >
-              <MessageSquare size={18} />
+              <MessageSquare size={16} />
               <span>WhatsApp: 7480078779</span>
             </button>
             <a 
               href="tel:+917480078779"
               className="btn-primary"
-              style={{ width: '100%', justifyContent: 'center' }}
+              style={{ width: '100%', justifyContent: 'center', padding: '0.65rem' }}
             >
-              <Phone size={18} />
+              <Phone size={16} />
               <span>Call: 7480078779</span>
             </a>
           </div>

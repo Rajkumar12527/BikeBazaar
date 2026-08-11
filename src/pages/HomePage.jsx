@@ -118,7 +118,7 @@ export default function HomePage({ bikes, onSelectBike, onNavigate, onToggleWish
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
               }}>
                 <img 
-                  src="/images/hero_banner_main.jpg" 
+                  src="./src/assets/h1.png" 
                   alt="Bike Bazaar Luxury Showroom" 
                   style={{ width: '100%', height: '340px', objectFit: 'cover', borderRadius: '16px' }}
                 />
@@ -145,7 +145,7 @@ export default function HomePage({ bikes, onSelectBike, onNavigate, onToggleWish
         </div>
       </section>
 
-      {/* Trust Highlights Strip */}
+      {/* Trust Highlights Strip*/}
       <section style={{ backgroundColor: '#ffffff', padding: '2rem 0', borderBottom: '1px solid #e2e8f0' }}>
         <div className="container">
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', textAlign: 'center' }}>
@@ -167,7 +167,7 @@ export default function HomePage({ bikes, onSelectBike, onNavigate, onToggleWish
             </div>
           </div>
         </div>
-      </section>
+      </section> 
 
       {/* Category Shortcut Section */}
       <section style={{ padding: '3.5rem 0', backgroundColor: '#f8fafc' }}>
