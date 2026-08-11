@@ -256,9 +256,6 @@ export default function App() {
         activeTab={activeTab} 
         setActiveTab={handleNavigate} 
         wishlistCount={wishlists.length}
-        currentUser={currentUser}
-        onOpenLogin={openLoginModal}
-        onLogout={handleLogout}
         onOpenAdmin={openAdminPage}
       />
 

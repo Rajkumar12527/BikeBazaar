@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { Bike, Phone, MessageSquare, Menu, X, Heart, ShieldCheck, Mail, User, LogOut, ChevronDown, CheckCircle2 } from 'lucide-react';
+import { Bike, Phone, MessageSquare, Menu, X, Heart, ShieldCheck, Mail, LogOut, ChevronDown, CheckCircle2 } from 'lucide-react';
 
-export default function Header({ activeTab, setActiveTab, wishlistCount, currentUser, onOpenLogin, onLogout, onOpenAdmin }) {
+export default function Header({ activeTab, setActiveTab, wishlistCount, onOpenAdmin }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   const navLinks = [
     { id: 'home', label: 'Home' },
@@ -17,7 +16,6 @@ export default function Header({ activeTab, setActiveTab, wishlistCount, current
   const handleNavClick = (id) => {
     setActiveTab(id);
     setMobileMenuOpen(false);
-    setUserDropdownOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -26,7 +24,7 @@ export default function Header({ activeTab, setActiveTab, wishlistCount, current
   };
 
   return (
-    <header className="header">
+    <header className="header" style={{ position: 'sticky', top: 0, zIndex: 1000, backgroundColor: 'rgba(255, 255, 255, 0.97)', backdropFilter: 'blur(10px)' }}>
       
       {/* Main Navbar */}
       <div className="container">
@@ -45,8 +43,6 @@ export default function Header({ activeTab, setActiveTab, wishlistCount, current
               </div>
               <div className="brand-tagline">
                 <span className="brand-tag-certified">CERTIFIED STORE</span>
-                <span className="brand-tag-dot">•</span>
-                <span className="brand-tag-city">PATNA</span>
               </div>
             </div>
           </div>
@@ -84,84 +80,6 @@ export default function Header({ activeTab, setActiveTab, wishlistCount, current
               <Heart size={15} fill={activeTab === 'wishlist' || wishlistCount > 0 ? "#dc2626" : "none"} />
               <span>{wishlistCount}</span>
             </button>
-
-            {/* User Auth Profile / Login Button */}
-            {currentUser ? (
-              <div style={{ position: 'relative' }}>
-                <button
-                  className="btn-secondary btn-sm"
-                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.4rem',
-                    backgroundColor: '#eff6ff',
-                    borderColor: '#bfdbfe',
-                    color: '#1e40af',
-                    fontWeight: 700
-                  }}
-                >
-                  <div style={{
-                    width: '22px',
-                    height: '22px',
-                    borderRadius: '50%',
-                    backgroundColor: '#1e40af',
-                    color: '#ffffff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.75rem',
-                    fontWeight: 800
-                  }}>
-                    {currentUser.name ? currentUser.name[0].toUpperCase() : 'U'}
-                  </div>
-                  <span style={{ maxWidth: '90px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {currentUser.name ? currentUser.name.split(' ')[0] : 'Account'}
-                  </span>
-                  <ChevronDown size={14} />
-                </button>
-
-                {userDropdownOpen && (
-                  <div className="user-menu-dropdown">
-                    <div style={{ padding: '0.6rem 0.85rem', borderBottom: '1px solid #e2e8f0', marginBottom: '0.35rem' }}>
-                      <div style={{ fontWeight: 800, fontSize: '0.9rem', color: '#0f172a' }}>{currentUser.name}</div>
-                      <div style={{ fontSize: '0.78rem', color: '#64748b' }}>{currentUser.phone || currentUser.email}</div>
-                    </div>
-                    <div 
-                      className="user-menu-item" 
-                      onClick={() => handleNavClick('wishlist')}
-                    >
-                      <Heart size={15} style={{ color: '#dc2626' }} />
-                      <span>My Saved Wishlist ({wishlistCount})</span>
-                    </div>
-                    <div className="user-menu-item" onClick={() => handleNavClick('sell')}>
-                      <Bike size={15} style={{ color: '#1e40af' }} />
-                      <span>My Sell Requests</span>
-                    </div>
-                    <div 
-                      className="user-menu-item" 
-                      onClick={() => {
-                        setUserDropdownOpen(false);
-                        onLogout();
-                      }}
-                      style={{ color: '#dc2626', borderTop: '1px solid #f1f5f9', marginTop: '0.35rem', paddingTop: '0.6rem' }}
-                    >
-                      <LogOut size={15} />
-                      <span>Logout Account</span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <button
-                className="btn-secondary btn-sm"
-                onClick={onOpenLogin}
-                style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: '#1e40af', fontWeight: 700, borderColor: '#bfdbfe', backgroundColor: '#f0f9ff' }}
-              >
-                <User size={15} />
-                <span>Login</span>
-              </button>
-            )}
 
             {/* Owner Portal / Admin Button */}
             <button
@@ -204,7 +122,7 @@ export default function Header({ activeTab, setActiveTab, wishlistCount, current
               <Phone size={18} />
             </a>
 
-            {/* Mobile Hamburger Drawer Toggle (Hides automatically on desktop via CSS) */}
+            {/* Mobile Hamburger Drawer Toggle */}
             <button 
               className="btn-secondary btn-sm mobile-hamburger-btn" 
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -217,7 +135,7 @@ export default function Header({ activeTab, setActiveTab, wishlistCount, current
         </div>
       </div>
 
-      {/* Mobile Drawer Menu (Strictly hidden on desktop via CSS class .mobile-drawer-menu) */}
+      {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="mobile-drawer-menu">
           {navLinks.map((link) => (
@@ -238,34 +156,15 @@ export default function Header({ activeTab, setActiveTab, wishlistCount, current
             </div>
           ))}
 
-          {/* User Auth row for Mobile */}
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.65rem', marginTop: '0.3rem' }}>
-            {currentUser ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.85rem' }}>
-                <div>
-                  <div style={{ fontWeight: 800, fontSize: '0.88rem' }}>{currentUser.name}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{currentUser.phone}</div>
-                </div>
-                <button 
-                  onClick={() => { setMobileMenuOpen(false); onLogout(); }} 
-                  style={{ color: '#dc2626', fontSize: '0.8rem', fontWeight: 700, backgroundColor: 'transparent', border: 'none' }}
-                >
-                  Logout
-                </button>
-              </div>
-            ) : (
-              <button 
-                onClick={() => { setMobileMenuOpen(false); onOpenLogin(); }}
-                className="btn-secondary"
-                style={{ width: '100%', justifyContent: 'center', marginBottom: '0.5rem', color: '#1e40af', fontWeight: 700 }}
-              >
-                <User size={16} />
-                <span>Login / Register Account</span>
-              </button>
-            )}
-          </div>
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.65rem', marginTop: '0.4rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <button 
+              onClick={onOpenAdmin}
+              className="btn-secondary"
+              style={{ width: '100%', justifyContent: 'center', backgroundColor: '#0f172a', color: '#ffffff', fontWeight: 800 }}
+            >
+              <span>👑 Owner Portal Login</span>
+            </button>
 
-          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '0.65rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <button 
               onClick={handleWhatsApp}
               className="btn-whatsapp"
@@ -274,6 +173,7 @@ export default function Header({ activeTab, setActiveTab, wishlistCount, current
               <MessageSquare size={16} />
               <span>WhatsApp: 7480078779</span>
             </button>
+            
             <a 
               href="tel:+917480078779"
               className="btn-primary"
