@@ -31,21 +31,24 @@ export default function FilterSidebar({
     selectedBrand !== 'All Brands' || 
     selectedType !== 'All Types' || 
     selectedOwner !== 'All Owners' || 
-    maxPrice < 250000 ||
+    maxPrice < 1000000 ||
     priceRange !== 'all' ||
     showWishlistOnly;
 
   return (
-    <div style={{
-      backgroundColor: '#ffffff',
-      border: '1px solid #e2e8f0',
-      borderRadius: '16px',
-      padding: '1.25rem',
-      boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '1.25rem'
-    }}>
+    <div 
+      className="filter-sidebar-sticky"
+      style={{
+        backgroundColor: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '16px',
+        padding: '1.25rem',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1.25rem'
+      }}
+    >
       {/* Header & Reset */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid #e2e8f0', paddingBottom: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 800, color: '#0f172a', fontSize: '1.05rem' }}>
@@ -330,13 +333,13 @@ export default function FilterSidebar({
       <div>
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.78rem', fontWeight: 800, color: '#475569', marginBottom: '0.4rem', textTransform: 'uppercase' }}>
           <span>Max Price Limit</span>
-          <span style={{ color: '#1e40af', fontWeight: 800 }}>₹{maxPrice.toLocaleString('en-IN')}</span>
+          <span style={{ color: '#1e40af', fontWeight: 800 }}>₹{maxPrice >= 1000000 ? '10 Lakhs+' : maxPrice.toLocaleString('en-IN')}</span>
         </div>
         <input 
           type="range"
-          min="40000"
-          max="250000"
-          step="5000"
+          min="30000"
+          max="1000000"
+          step="10000"
           value={maxPrice}
           onChange={(e) => {
             setMaxPrice(Number(e.target.value));
@@ -345,8 +348,8 @@ export default function FilterSidebar({
           style={{ width: '100%', accentColor: '#1e40af', cursor: 'pointer' }}
         />
         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: '#94a3b8', marginTop: '2px' }}>
-          <span>₹40,000</span>
-          <span>₹2,50,000+</span>
+          <span>₹30,000</span>
+          <span>₹10,000,000 (10 Lakhs+)</span>
         </div>
       </div>
 

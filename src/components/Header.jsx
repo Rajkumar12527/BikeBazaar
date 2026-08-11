@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Bike, Phone, MessageSquare, Menu, X, Heart, ShieldCheck, Mail, User, LogOut, ChevronDown, CheckCircle2 } from 'lucide-react';
 
-export default function Header({ activeTab, setActiveTab, wishlistCount, currentUser, onOpenLogin, onLogout }) {
+export default function Header({ activeTab, setActiveTab, wishlistCount, currentUser, onOpenLogin, onLogout, onOpenAdmin }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
@@ -27,35 +27,16 @@ export default function Header({ activeTab, setActiveTab, wishlistCount, current
 
   return (
     <header className="header">
-      {/* Top Announcement Bar */}
-      <div className="top-bar">
-        <div className="container" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600 }}>
-            <ShieldCheck size={14} style={{ color: '#10b981' }} />
-            <span>Patna's Certified Used Two-Wheeler Showroom • 100+ Point Inspection Guarantee</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <a href="tel:+917480078779" style={{ color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Phone size={13} style={{ color: '#2563eb' }} />
-              <span>+91 7480078779</span>
-            </a>
-            <a href="mailto:doubledoormusic12@gmail.com" style={{ color: '#cbd5e1', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Mail size={13} style={{ color: '#dc2626' }} />
-              <span>doubledoormusic12@gmail.com</span>
-            </a>
-          </div>
-        </div>
-      </div>
-
+      
       {/* Main Navbar */}
       <div className="container">
         <div className="navbar">
-          {/* Ultra Premium Logo Badge */}
+          {/* Compact Premium Logo Badge */}
           <div className="brand-logo" onClick={() => handleNavClick('home')} title="Bike Bazaar Home">
             <div className="brand-logo-badge">
-              <Bike size={22} color="#ffffff" />
+              <Bike size={17} color="#ffffff" />
               <div className="brand-logo-spark">
-                <ShieldCheck size={11} color="#f59e0b" />
+                <ShieldCheck size={9} color="#f59e0b" />
               </div>
             </div>
             <div className="brand-text-container">
@@ -181,6 +162,27 @@ export default function Header({ activeTab, setActiveTab, wishlistCount, current
                 <span>Login</span>
               </button>
             )}
+
+            {/* Owner Portal / Admin Button */}
+            <button
+              className="btn-secondary btn-sm desktop-only-btn"
+              onClick={onOpenAdmin}
+              title="Owner / Admin Portal Login (rajkumar87036@gmail.com)"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                backgroundColor: '#0f172a',
+                color: '#f8fafc',
+                borderColor: '#334155',
+                fontSize: '0.78rem',
+                fontWeight: 800,
+                padding: '0.35rem 0.6rem'
+              }}
+            >
+              <span>👑</span>
+              <span>Owner Portal</span>
+            </button>
 
             {/* Desktop WhatsApp Icon Button */}
             <button 

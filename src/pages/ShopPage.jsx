@@ -19,7 +19,7 @@ export default function ShopPage({
   const [selectedBrand, setSelectedBrand] = useState(initialFilters.brand || 'All Brands');
   const [selectedType, setSelectedType] = useState(initialFilters.type || 'All Types');
   const [selectedOwner, setSelectedOwner] = useState(initialFilters.owner || 'All Owners');
-  const [maxPrice, setMaxPrice] = useState(initialFilters.maxPrice || 250000);
+  const [maxPrice, setMaxPrice] = useState(initialFilters.maxPrice || 1000000);
   const [priceRange, setPriceRange] = useState('all');
   const [sortBy, setSortBy] = useState('featured');
   const [showWishlistOnly, setShowWishlistOnly] = useState(isWishlistPage || !!initialFilters.wishlistOnly);
@@ -34,13 +34,14 @@ export default function ShopPage({
       setSelectedType('All Types');
       setSelectedOwner('All Owners');
       setSearchQuery('');
-      setMaxPrice(250000);
+      setMaxPrice(1000000);
       setPriceRange('all');
     } else {
       setShowWishlistOnly(!!initialFilters.wishlistOnly);
       if (initialFilters.category) setSelectedCategory(initialFilters.category);
       if (initialFilters.brand) setSelectedBrand(initialFilters.brand);
       if (initialFilters.searchQuery) setSearchQuery(initialFilters.searchQuery);
+      if (initialFilters.maxPrice) setMaxPrice(initialFilters.maxPrice);
     }
   }, [isWishlistPage, initialFilters]);
 
@@ -50,7 +51,7 @@ export default function ShopPage({
     setSelectedBrand('All Brands');
     setSelectedType('All Types');
     setSelectedOwner('All Owners');
-    setMaxPrice(250000);
+    setMaxPrice(1000000);
     setPriceRange('all');
     setSortBy('featured');
     if (isWishlistPage && onNavigate) {
@@ -89,11 +90,17 @@ export default function ShopPage({
       // Search query string filter
       if (searchQuery.trim() !== '') {
         const q = searchQuery.toLowerCase();
-        const matchName = b.name.toLowerCase().includes(q);
-        const matchBrand = b.brand.toLowerCase().includes(q);
-        const matchRto = b.rto.toLowerCase().includes(q);
-        const matchEngine = b.engine.toLowerCase().includes(q);
-        const matchType = b.type ? b.type.toLowerCase().includes(q) : false;
+        const nameStr = (b.name || '');
+        const brandStr = (b.brand || '');
+        const rtoStr = (b.specs?.rto || b.rto || '');
+        const engineStr = (b.cc ? `${b.cc} cc` : b.engine || '');
+        const typeStr = (b.type || b.category || '');
+
+        const matchName = nameStr.toLowerCase().includes(q);
+        const matchBrand = brandStr.toLowerCase().includes(q);
+        const matchRto = rtoStr.toLowerCase().includes(q);
+        const matchEngine = engineStr.toLowerCase().includes(q);
+        const matchType = typeStr.toLowerCase().includes(q);
         if (!matchName && !matchBrand && !matchRto && !matchEngine && !matchType) return false;
       }
       return true;

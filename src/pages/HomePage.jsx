@@ -40,10 +40,11 @@ export default function HomePage({ bikes, onSelectBike, onNavigate, onToggleWish
 
   // Filtered bikes for the product showcase tabs
   const showcaseBikes = bikes.filter((b) => {
-    if (activeProductTab === 'cruiser') return b.type === 'Cruiser' || b.brand === 'Royal Enfield';
-    if (activeProductTab === 'sports') return b.type === 'Sports';
-    if (activeProductTab === 'scooter') return b.category === 'Scooty' || b.type === 'Scooter';
-    if (activeProductTab === 'commuter') return b.type === 'Commuter' || b.mileage.includes('6') || b.mileage.includes('5');
+    const m = (b.specs?.mileage || b.mileage || '');
+    if (activeProductTab === 'cruiser') return b.type === 'Cruiser' || b.brand === 'Royal Enfield' || b.category === 'Cruiser';
+    if (activeProductTab === 'sports') return b.type === 'Sports' || b.category === 'Sports';
+    if (activeProductTab === 'scooter') return b.category === 'Scooty' || b.type === 'Scooter' || b.category === 'Scooter';
+    if (activeProductTab === 'commuter') return b.type === 'Commuter' || b.category === 'Commuter' || m.includes('6') || m.includes('5');
     return true;
   }).slice(0, 6);
 

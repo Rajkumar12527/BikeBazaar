@@ -12,14 +12,15 @@ import SellPage from './pages/SellPage';
 import EmiPage from './pages/EmiPage';
 import AboutPage from './pages/AboutPage';
 import ContactPage from './pages/ContactPage';
+import AdminPage from './pages/AdminPage';
 
-import { bikesData } from './data/bikesData';
+import { bikesData as defaultStaticBikes } from './data/bikesData';
 
 export default function App() {
   // Initialize activeTab from URL hash if present
   const getInitialTab = () => {
     const hash = window.location.hash.replace('#', '').split('?')[0];
-    const validTabs = ['home', 'shop', 'wishlist', 'sell', 'emi', 'about', 'contact'];
+    const validTabs = ['home', 'shop', 'wishlist', 'sell', 'emi', 'about', 'contact', 'admin'];
     return validTabs.includes(hash) ? hash : 'home';
   };
 
@@ -35,6 +36,95 @@ export default function App() {
 
   // Filters passed from Hero Search on HomePage to ShopPage
   const [heroFilters, setHeroFilters] = useState({});
+
+  // 1. DYNAMIC VEHICLE INVENTORY STATE (Sanitized & Persistent)
+  const [bikes, setBikes] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bike_bazaar_inventory_db');
+      if (!saved) return defaultStaticBikes;
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map((item) => ({
+          id: item.id || `bike-${Math.random()}`,
+          name: item.name || 'Certified Vehicle',
+          brand: item.brand || 'Honda',
+          category: item.category || 'Cruiser',
+          type: item.type || 'Bike',
+          price: typeof item.price === 'number' ? item.price : Number(item.price) || 75000,
+          originalPrice: typeof item.originalPrice === 'number' ? item.originalPrice : Number(item.originalPrice) || 85000,
+          year: typeof item.year === 'number' ? item.year : Number(item.year) || 2022,
+          km: typeof item.km === 'number' ? item.km : Number(item.km) || 10000,
+          owner: item.owner || '1st Owner',
+          cc: item.cc || '350',
+          score: item.score || '96',
+          location: item.location || 'Patna, Bihar',
+          isFeatured: item.isFeatured !== false,
+          status: item.status || 'Available',
+          images: Array.isArray(item.images) && item.images.length > 0 ? item.images : ['https://images.unsplash.com/photo-1558981403-c5f9899a28bc?auto=format&fit=crop&w=800&q=80'],
+          badges: Array.isArray(item.badges) ? item.badges : ['Certified', '6 M Warranty'],
+          specs: item.specs || { mileage: '40 kmpl', fuelType: 'Petrol', brakes: 'ABS', transmission: 'Manual', rto: 'BR-01 Patna', insurance: 'Valid 2027' }
+        }));
+      }
+      return defaultStaticBikes;
+    } catch {
+      return defaultStaticBikes;
+    }
+  });
+
+  // 2. DYNAMIC TEST DRIVE BOOKINGS STATE (Persistent in localStorage)
+  const [testDrives, setTestDrives] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bike_bazaar_testdrives_db');
+      return saved ? JSON.parse(saved) : [
+        { id: 'td-101', name: 'Rohan Sharma', phone: '9876543210', bikeName: 'Royal Enfield Classic 350', date: '2026-08-12', time: '11:00 AM', status: 'Pending' },
+        { id: 'td-102', name: 'Vikram Singh', phone: '7480078779', bikeName: 'Honda Activa 6G', date: '2026-08-13', time: '03:00 PM', status: 'Confirmed' }
+      ];
+    } catch {
+      return [];
+    }
+  });
+
+  // 3. DYNAMIC SELL & VALUATION LEADS STATE (Persistent in localStorage)
+  const [sellLeads, setSellLeads] = useState(() => {
+    try {
+      const saved = localStorage.getItem('bike_bazaar_sell_leads_db');
+      return saved ? JSON.parse(saved) : [
+        { id: 'sell-201', sellerName: 'Amit Verma', sellerPhone: '9123456789', brand: 'TVS', modelName: 'Apache RTR 160', year: '2021', km: '18000', owner: '1st Owner', estimatedPrice: '₹75,000 - ₹82,000', status: 'New Lead' }
+      ];
+    } catch {
+      return [];
+    }
+  });
+
+  // Synchronize bikes inventory with localStorage whenever updated
+  const handleUpdateBikes = (newBikes) => {
+    setBikes(newBikes);
+    try {
+      localStorage.setItem('bike_bazaar_inventory_db', JSON.stringify(newBikes));
+    } catch (err) {
+      console.error('Failed to save inventory DB', err);
+    }
+  };
+
+  // Synchronize test drive bookings with localStorage
+  const handleUpdateTestDrives = (newTestDrives) => {
+    setTestDrives(newTestDrives);
+    try {
+      localStorage.setItem('bike_bazaar_testdrives_db', JSON.stringify(newTestDrives));
+    } catch (err) {
+      console.error('Failed to save test drive DB', err);
+    }
+  };
+
+  // Synchronize sell leads with localStorage
+  const handleUpdateSellLeads = (newSellLeads) => {
+    setSellLeads(newSellLeads);
+    try {
+      localStorage.setItem('bike_bazaar_sell_leads_db', JSON.stringify(newSellLeads));
+    } catch (err) {
+      console.error('Failed to save sell leads DB', err);
+    }
+  };
 
   // Load persisted user session on mount
   useEffect(() => {
@@ -62,7 +152,7 @@ export default function App() {
       // 2. Parse tab and parameters from URL hash or event state
       const hashParts = window.location.hash.replace('#', '').split('?');
       const hashTab = hashParts[0];
-      const validTabs = ['home', 'shop', 'wishlist', 'sell', 'emi', 'about', 'contact'];
+      const validTabs = ['home', 'shop', 'wishlist', 'sell', 'emi', 'about', 'contact', 'admin'];
       const targetTab = validTabs.includes(hashTab) ? hashTab : 'home';
 
       if (event?.state?.filters) {
@@ -135,6 +225,25 @@ export default function App() {
     window.history.pushState({ modal: 'login' }, '', `#${activeTab}?login=true`);
   };
 
+  const openAdminPage = () => {
+    handleNavigate('admin');
+  };
+
+  // If in Standalone Admin Dashboard route, render full page Admin workspace
+  if (activeTab === 'admin') {
+    return (
+      <AdminPage
+        bikes={bikes}
+        onUpdateBikes={handleUpdateBikes}
+        testDrives={testDrives}
+        onUpdateTestDrives={handleUpdateTestDrives}
+        sellLeads={sellLeads}
+        onUpdateSellLeads={handleUpdateSellLeads}
+        onNavigate={handleNavigate}
+      />
+    );
+  }
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Header Navbar */}
@@ -145,13 +254,14 @@ export default function App() {
         currentUser={currentUser}
         onOpenLogin={openLoginModal}
         onLogout={handleLogout}
+        onOpenAdmin={openAdminPage}
       />
 
       {/* Main Page Content */}
       <main style={{ flexGrow: 1 }}>
         {activeTab === 'home' && (
           <HomePage
-            bikes={bikesData}
+            bikes={bikes}
             onSelectBike={openBikeModal}
             onNavigate={handleNavigate}
             onToggleWishlist={handleToggleWishlist}
@@ -163,7 +273,7 @@ export default function App() {
 
         {activeTab === 'shop' && (
           <ShopPage
-            bikes={bikesData}
+            bikes={bikes}
             onSelectBike={openBikeModal}
             onToggleWishlist={handleToggleWishlist}
             wishlists={wishlists}
@@ -175,7 +285,7 @@ export default function App() {
 
         {activeTab === 'wishlist' && (
           <ShopPage
-            bikes={bikesData}
+            bikes={bikes}
             onSelectBike={openBikeModal}
             onToggleWishlist={handleToggleWishlist}
             wishlists={wishlists}

@@ -40,6 +40,27 @@ export default function SellPage() {
   const handleBooking = (e) => {
     e.preventDefault();
     setSubmitted(true);
+
+    try {
+      const existing = JSON.parse(localStorage.getItem('bike_bazaar_sell_leads_db') || '[]');
+      const newEntry = {
+        id: `sell-${Date.now()}`,
+        sellerName: sellerName || 'Customer Lead',
+        sellerPhone: sellerPhone || '9876543210',
+        brand: brand,
+        modelName: modelName || 'Used Bike',
+        year: year,
+        km: km,
+        owner: owner,
+        estimatedPrice: evaluatedPrice ? `₹${evaluatedPrice.min.toLocaleString('en-IN')} - ₹${evaluatedPrice.max.toLocaleString('en-IN')}` : '₹75,000',
+        status: 'New Lead',
+        submittedAt: new Date().toLocaleDateString('en-IN')
+      };
+      const updated = [newEntry, ...existing];
+      localStorage.setItem('bike_bazaar_sell_leads_db', JSON.stringify(updated));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (

@@ -14,6 +14,24 @@ export default function TestDriveModal({ bike, onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitted(true);
+
+    try {
+      const existing = JSON.parse(localStorage.getItem('bike_bazaar_testdrives_db') || '[]');
+      const newEntry = {
+        id: `td-${Date.now()}`,
+        name: formData.name,
+        phone: formData.phone,
+        bikeName: bike?.name || 'Selected Vehicle',
+        date: formData.date || 'Tomorrow',
+        time: formData.time || '11:00 AM',
+        status: 'Pending',
+        submittedAt: new Date().toLocaleDateString('en-IN')
+      };
+      const updated = [newEntry, ...existing];
+      localStorage.setItem('bike_bazaar_testdrives_db', JSON.stringify(updated));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
